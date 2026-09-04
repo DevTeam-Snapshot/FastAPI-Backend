@@ -3,6 +3,14 @@
 - AI 광고 제작 서비스의 백엔드 저장소
 - 본 저장소의 FastAPI 백엔드는 프론트엔드, 데이터베이스 및 AI 모델 서버를 연결합니다.
 
+## Docker 실행
+```text
+docker pull westhooo/snapshot-backend:0.1.0
+docker run --rm -p 8000:8000 westhooo/snapshot-backend:0.1.0
+```
+- 본 버전은 실행을 위한 최소 단위의 DockerFile 입니다.(0904)
+- 브라우저에서 http://localhost:8000으로 접속합니다.
+
 ## 1. 기술 스택
 ### Backend
 
