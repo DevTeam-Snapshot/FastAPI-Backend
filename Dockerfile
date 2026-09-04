@@ -1,4 +1,4 @@
-# 초기 백엔드 이미지 제작(0903)
+# FastAPI 백엔드 실행 이미지
 
 FROM python:3.12-slim
 
