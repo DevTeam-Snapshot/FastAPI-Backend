@@ -1,0 +1,14 @@
+# 깃 버전, 환경변수
+.git
+.env
+
+# 캐시 파일
+__pycache__/
+*.pyc
+
+# 가상 환경
+.venv/
+venv/
+
+.vscode/
+.idea/
