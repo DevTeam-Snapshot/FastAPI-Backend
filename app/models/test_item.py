@@ -1,4 +1,4 @@
-# MariaDB의 SQL 자료 가져오기
+# 테이블에 사용할 SQLalchemy 자료 가져오기
 from sqlalchemy import Integer, String
 
 # Python -> SQL 연결

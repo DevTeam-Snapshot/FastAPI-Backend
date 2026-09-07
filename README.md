@@ -5,13 +5,12 @@
 
 ## Docker 실행
 ```text
-docker pull westhooo/snapshot-backend:0.2.0-dev.1
-docker run --rm -p 8000:8000 westhooo/snapshot-backend:0.2.0-dev.1
+docker pull westhooo/snapshot-backend:0.3.0-dev.1
+docker run --rm -p 8000:8000 westhooo/snapshot-backend:0.3.0-dev.1
 ```
-- 본 버전은 실행을 위한 최소 단위의 DockerFile 입니다.(0904)
 - 브라우저에서 http://localhost:8000/docs 접속합니다.
-+
-- 현재 이미지는 MariaDB 연결 환경변수와 Alembic 마이그레이션이 필요합니다.
+- PostgreSQL 컨테이너 및 DB 환경변수 설정이 필요합니다.
+- DB 테이블 생성 및 변경에는 Alembic 마이그레이션을 사용합니다.
 - Docker Compose 실행 방법은 GCP VM 통합 테스트 완료 후 추가할 예정입니다.
 
 ## 1. 기술 스택
@@ -30,10 +29,10 @@ docker run --rm -p 8000:8000 westhooo/snapshot-backend:0.2.0-dev.1
 
 | 기술 | 버전 | 사용 목적 |
 | --- | --- | --- |
-| MariaDB | 12.3.3 | 회원, 숙소, 생성 기록 및 피드백 저장 |
-| SQLAlchemy | 2.0.52 | Python 코드에서 MariaDB 데이터 처리 |
+| PostgreSQL | 17.11 | 회원, 숙소, 생성 기록 및 피드백 저장 |
+| SQLAlchemy | 2.0.52 | Python 코드에서 PostgreSQL 데이터 처리 |
 | Alembic | 1.19.1 | 데이터베이스 스키마 변경 이력 관리 |
-| PyMySQL | 1.2.0 | SQLAlchemy와 MariaDB 연결 |
+| Psycopg | 3.3.5 | SQLAlchemy와 PostgreSQL 연결 |
 
 ### Infrastructure
 
