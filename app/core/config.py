@@ -4,7 +4,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 class Settings(BaseSettings):
     # .env의 DB 접속 정보 읽기
     db_host : str
-    db_port : int = 3306
+    db_port : int = 5432
     db_user : str
     db_password : str
     db_name : str

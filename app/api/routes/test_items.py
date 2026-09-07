@@ -11,7 +11,7 @@ router = APIRouter(
     tags = ["Test Items"]
 )
 
-# 프론트엔드의 입력값을 MariaDB에 저장
+# 프론트엔드의 입력값을 데이터베이스에 저장
 @router.post("",
              response_model = TestItemResponse,
              status_code = status.HTTP_201_CREATED)

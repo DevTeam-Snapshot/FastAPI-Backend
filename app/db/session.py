@@ -10,18 +10,17 @@ from app.core.config import get_settings
 # core에 저장한 setting값을 불러옴
 settings = get_settings()
 
-# MariaDB 접속에 사용할 주소 구성
+# PostgreSQL 접속에 사용할 주소 구성
 database_url = URL.create(
-    drivername = "mysql+pymysql",
+    drivername = "postgresql+psycopg",
     username = settings.db_user,
     password = settings.db_password,
     host = settings.db_host,
     port = settings.db_port,
-    database=settings.db_name,
-    query = {"charset":"utf8mb4"}
+    database=settings.db_name
 )
 
-# SQLAlchemy가 MariaDB 연결을 관리할 엔진 생성 (연결 관리)
+# SQLAlchemy가 PostgreSQL 연결을 관리할 엔진 생성 (연결 관리)
 engine = create_engine(
     database_url,
     pool_pre_ping = True        # 연결이 되어있는지 간이 확인
