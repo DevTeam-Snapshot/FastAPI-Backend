@@ -1,0 +1,68 @@
+services:
+  # PostgreSQL 데이터베이스
+  postgres:
+    image: postgres:17.11
+    container_name: snapshot-postgres
+
+    # PostgreSQL 생성에 필요한 환경변수
+    env_file:
+      - .postgres.env
+
+    # 호스트에서 DBeaver로 접속할 수 있도록 포트 연결
+    ports:
+      - "127.0.0.1:5432:5432"
+
+    # 컨테이너를 다시 만들어도 DB 데이터 유지
+    volumes:
+      - snapshot-postgres-data:/var/lib/postgresql/data
+
+    # PostgreSQL이 실제 요청을 받을 준비가 됐는지 확인
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # FastAPI 백엔드
+  backend:
+    # 현재 프로젝트의 Dockerfile로 이미지 빌드
+    build:
+      context: .
+      dockerfile: Dockerfile
+
+    image: snapshot-backend:local
+    container_name: snapshot-backend
+
+    # FastAPI 환경변수
+    env_file:
+      - .env
+
+    # 컨테이너에서는 PostgreSQL 서비스 이름으로 접속
+    environment:
+      DB_HOST: postgres
+
+    # PostgreSQL 준비가 끝난 다음 백엔드 실행
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+    # 호스트 9000번을 컨테이너 8000번으로 연결
+    ports:
+      - "127.0.0.1:9000:8000"
+
+    # 테이블을 최신 상태로 만든 후 FastAPI 실행
+    command:
+      - sh
+      - -c
+      - |
+        alembic upgrade head &&
+        uvicorn app.main:app --host 0.0.0.0 --port 8000
+
+# PostgreSQL 데이터를 보관하는 Docker 볼륨
+volumes:
+  snapshot-postgres-data:
+    name: snapshot-postgres-data

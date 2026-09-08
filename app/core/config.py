@@ -9,6 +9,13 @@ class Settings(BaseSettings):
     db_password : str
     db_name : str
 
+    model_grpc_target: str = "127.0.0.1:15051"      # 모델 서버가 실행되는 주소
+    model_name: str = "Qwen/Qwen3-06.B"             # 모델 명
+    model_revision: str = (                          # 모델 서버와 백엔드가 같은 토크나이저 사용
+        "c1899de289a04d12100db370d81485cdf75e47ca"
+    )
+    model_timeout_seconds: float = 120.0
+
     # .env파일을 utf-8형식으로 읽기
     model_config = SettingsConfigDict(
         env_file = '.env',

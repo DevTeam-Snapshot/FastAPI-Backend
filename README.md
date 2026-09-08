@@ -1,17 +1,28 @@
 # FastAPI-backend
 - 담당자: AI 11기 2팀(SnapShot) 정서호
 - AI 광고 제작 서비스의 백엔드 저장소
-- 본 저장소의 FastAPI 백엔드는 프론트엔드, 데이터베이스 및 AI 모델 서버를 연결합니다.
+- React와는 REST API로 통신합니다.
+- vLLM 모델 서버와는 gRPC로 통신합니다.
 
-## Docker 실행
-```text
-docker pull westhooo/snapshot-backend:0.3.0-dev.1
-docker run --rm -p 8000:8000 westhooo/snapshot-backend:0.3.0-dev.1
+## Docker Compose 실행 방법
+
+FastAPI 백엔드와 PostgreSQL을 Docker Compose로 함께 실행합니다.
+`.env`와 `.postgres.env`의 DB 사용자, 비밀번호, 데이터베이스 이름은 동일해야 합니다. (노션 참고)
+
+### 백엔드와 PostgreSQL 실행
+
+```bash
+docker compose up --build -d
 ```
-- 브라우저에서 http://localhost:8000/docs 접속합니다.
-- PostgreSQL 컨테이너 및 DB 환경변수 설정이 필요합니다.
-- DB 테이블 생성 및 변경에는 Alembic 마이그레이션을 사용합니다.
-- Docker Compose 실행 방법은 GCP VM 통합 테스트 완료 후 추가할 예정입니다.
+
+### 컨테이너 종료
+
+```bash
+docker compose down
+```
+
+- 브라우저에서 http://127.0.0.1:9000/docs 접속합니다.
+- PostgreSQL 컨테이너 및 DB 환경변수 설정이 필요합니다. (.env 설정)
 
 ## 1. 기술 스택
 ### Backend
@@ -65,7 +76,13 @@ FastAPI-Backend/
 │   │   └── routes/
 │   │       ├── __init__.py
 │   │       ├── health.py
+│   │       ├── model_health.py
+│   │       ├── integration.py
 │   │       └── test_items.py
+│   │
+│   ├── clients/
+│   │   ├── __init__.py
+│   │   └── model.py
 │   │
 │   ├── core/
 │   │   ├── __init__.py
@@ -76,12 +93,19 @@ FastAPI-Backend/
 │   │   ├── base.py
 │   │   └── session.py
 │   │
+│   ├── grpc_stubs/
+│   │   ├── __init__.py
+│   │   ├── vllm_engine.proto
+│   │   ├── vllm_engine_pb2.py
+│   │   └── vllm_engine_pb2_grpc.py
+│   │
 │   ├── models/
 │   │   ├── __init__.py
 │   │   └── test_item.py
 │   │
 │   └── schemas/
 │       ├── __init__.py
+│       ├── integration_test.py
 │       └── test_item.py
 │
 ├── tests/
