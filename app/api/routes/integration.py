@@ -32,7 +32,16 @@ async def run_integration_test(
 ) -> IntegrationTestResponse:
 
     # React에서 받은 질문을 모델 클라이언트에 전달
-    model_answer = await model_client.generate(request.question)
+    try:
+        model_answer = await model_client.generate(
+            request.question
+        )
+
+    except ConnectionError as error:
+        raise HTTPException(
+            status_code = status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail = str(error)
+        ) from error
 
     # React에서 받은 index와 동일한 id를 가진 레코드 조회
     statement = select(TestItem).where(
