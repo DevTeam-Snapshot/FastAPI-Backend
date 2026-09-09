@@ -10,8 +10,8 @@ app = FastAPI(
 
 # 로컬에서 실행되는 React 개발 서버 주소 허용
 allowed_origins = [
-    "http://localhost:8080",
-    "http://127.0.0.1:8080",
+    "http://localhost:3030",
+    "http://127.0.0.1:3030",
 ]
 
 # 위 허용된 프론트엔드 주소에서 API 호출 가능하도록 설정
