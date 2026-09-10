@@ -1,6 +1,9 @@
 from fastapi import FastAPI
 from app.api.router import api_router
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+
+from app.services.image_storage import image_storage
 
 app = FastAPI(
     title = "Snapshot Backend API",
@@ -10,8 +13,8 @@ app = FastAPI(
 
 # 로컬에서 실행되는 React 개발 서버 주소 허용
 allowed_origins = [
-    "http://localhost:3030",
-    "http://127.0.0.1:3030",
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
 ]
 
 # 위 허용된 프론트엔드 주소에서 API 호출 가능하도록 설정
@@ -25,3 +28,10 @@ app.add_middleware(
 
 # router.py의 기능 가져오기
 app.include_router(api_router)
+
+# Image 폴더의 파일을 /images URL로 제공
+app.mount(
+    image_storage.url_prefix,
+    StaticFiles(directory=image_storage.storage_dir),
+    name="images",
+)
