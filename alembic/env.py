@@ -1,11 +1,11 @@
 # SQLAlchemy 모델 정보가 모이는 Base를 가져온다.
 from app.db.base import Base
 
+# image_generations 테이블을 Alembic metadata에 등록
+from app.models.image_generation import ImageGeneration
+
 # .env를 기반으로 만든 DB 접속 주소를 가져온다.
 from app.db.session import database_url
-
-# TestItem을 Base.metadata에 등록하기 위해 모델을 가져온다.
-from app.models.test_item import TestItem
 #==================================================
 
 from logging.config import fileConfig

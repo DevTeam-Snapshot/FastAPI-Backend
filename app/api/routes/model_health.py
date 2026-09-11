@@ -10,14 +10,14 @@ router = APIRouter(
 )
 
 
-# FastAPI에서 vLLM 서버 연결 상태 확인
+# FastAPI에서 이미지 모델 서버 연결 상태 확인
 @router.get(
     "/health",
     status_code=status.HTTP_200_OK
 )
 async def check_model_health() -> dict[str, bool]:
     try:
-        # vLLM의 HealthCheck RPC 호출
+        # 이미지 모델의 HealthCheck RPC 호출
         healthy = await model_client.health_check()
 
     except ConnectionError as error:
@@ -31,7 +31,7 @@ async def check_model_health() -> dict[str, bool]:
     if not healthy:
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail="vLLM 모델 서버가 준비되지 않았습니다."
+            detail="이미지 모델 서버가 준비되지 않았습니다."
         )
 
     return {

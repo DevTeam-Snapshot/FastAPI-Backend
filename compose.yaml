@@ -44,6 +44,8 @@ services:
     # 컨테이너에서는 PostgreSQL 서비스 이름으로 접속
     environment:
       DB_HOST: postgres
+      IMAGE_STORAGE_DIR: /app/Image
+      MODEL_GRPC_TARGET: llm-service:50051
 
     # PostgreSQL 준비가 끝난 다음 백엔드 실행
     depends_on:
@@ -53,6 +55,9 @@ services:
     # 호스트 9000번을 컨테이너 8000번으로 연결
     ports:
       - "127.0.0.1:9000:8000"
+
+    volumes:
+      - ./Image:/app/Image
 
     # 테이블을 최신 상태로 만든 후 FastAPI 실행
     command:
