@@ -2,6 +2,9 @@ from fastapi import FastAPI
 import os
 from app.api.router import api_router
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+
+from app.services.image_storage import image_storage
 
 app = FastAPI(
     title = "Snapshot Backend API",
@@ -26,3 +29,10 @@ app.add_middleware(
 
 # router.py의 기능 가져오기
 app.include_router(api_router)
+
+# Image 폴더의 파일을 /images URL로 제공
+app.mount(
+    image_storage.url_prefix,
+    StaticFiles(directory=image_storage.storage_dir),
+    name="images",
+)
