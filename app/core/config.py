@@ -22,9 +22,21 @@ class Settings(BaseSettings):
     # 업로드 가능한 이미지 한 장의 최대 용량(MB)
     max_upload_image_size_mb: int
 
+    # 업로드 가능한 이미지의 최대 전체 픽셀 수
+    max_upload_image_pixels: int
+
+    # 모델에 전달할 이미지의 최대 전체 픽셀 수
+    max_model_image_pixels: int
+
     model_grpc_target: str = "127.0.0.1:50051"      # 모델 서버가 실행되는 주소
     model_timeout_seconds: float = 120.0
     model_grpc_max_message_size_mb: int = 32       # gRPC에서 송수신할 수 있는 최대 메시지 크기(MiB)
+
+    # V2 기획 대화 RPC 제한 시간
+    planning_model_timeout_seconds: float
+
+    # V2 초안 이미지 생성 RPC 제한 시간
+    draft_model_timeout_seconds: float
 
     # .env파일을 utf-8형식으로 읽기
     model_config = SettingsConfigDict(

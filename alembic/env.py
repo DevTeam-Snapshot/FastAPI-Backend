@@ -4,6 +4,11 @@ from app.db.base import Base
 # image_generations 테이블을 Alembic metadata에 등록
 from app.models.image_generation import ImageGeneration
 
+# SQLAlchemy 테이블 정보를 Alembic metadata에 등록
+from app.models.image_generation import ImageGeneration
+from app.models.planning_session import PlanningSession
+from app.models.advertisement_draft import AdvertisementDraft
+
 # .env를 기반으로 만든 DB 접속 주소를 가져온다.
 from app.db.session import database_url
 #==================================================
