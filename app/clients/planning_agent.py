@@ -16,8 +16,7 @@ from app.models.enums import (
     ConversationRole,
     LodgingType,
     MessageIntent,
-    PlanningStep,
-    TurnEventType,
+    PlanningStep
 )
 
 from app.schemas.planning_turn import (
@@ -73,15 +72,6 @@ PLANNING_STEP_TO_PROTO = {
     ),
     PlanningStep.COMPLETE: (
         hotel_ad_v2_pb2.PLANNING_STEP_COMPLETE
-    ),
-}
-
-TURN_EVENT_TYPE_TO_PROTO = {
-    TurnEventType.USER_MESSAGE: (
-        hotel_ad_v2_pb2.TURN_EVENT_TYPE_USER_MESSAGE
-    ),
-    TurnEventType.IMAGE_UPLOADED: (
-        hotel_ad_v2_pb2.TURN_EVENT_TYPE_IMAGE_UPLOADED
     ),
 }
 
@@ -310,10 +300,13 @@ class GrpcPlanningAgentClient:
             hotel_ad_v2_pb2.ProcessTurnRequest(
                 request_id=str(uuid4()),
                 session_id=str(session_id),
-                state_revision=request.state_revision,
-                event_type=TURN_EVENT_TYPE_TO_PROTO[
-                    request.event_type
-                ],
+
+                # FastAPI에서만 기획단계 확인
+                state_revision=0,
+                event_type=(
+                    hotel_ad_v2_pb2
+                    .TURN_EVENT_TYPE_USER_MESSAGE
+                ),
                 user_message=request.user_message,
                 current_step=PLANNING_STEP_TO_PROTO[
                     request.current_step
@@ -328,22 +321,6 @@ class GrpcPlanningAgentClient:
             self.build_proto_brief(
                 request.brief
             )
-        )
-
-        proto_request.fields_to_reconfirm.extend(
-            BRIEF_FIELD_TO_PROTO[field]
-            for field in request.fields_to_reconfirm
-        )
-
-        if request.resume_step is not None:
-            proto_request.resume_step = (
-                PLANNING_STEP_TO_PROTO[
-                    request.resume_step
-                ]
-            )
-
-        proto_request.ad_copy_candidates.extend(
-            request.ad_copy_candidates
         )
 
         for message in request.conversation_history:
@@ -477,21 +454,9 @@ class GrpcPlanningAgentClient:
         response: hotel_ad_v2_pb2.ProcessTurnResponse,
     ) -> PlanningTurnResponse:
         try:
-            resume_step = None
-
-            if response.HasField("resume_step"):
-                resume_step = (
-                    PROTO_TO_PLANNING_STEP[
-                        response.resume_step
-                    ]
-                )
-
             return PlanningTurnResponse(
                 request_id=response.request_id,
                 session_id=response.session_id,
-                state_revision=(
-                    response.state_revision
-                ),
                 message_intent=(
                     PROTO_TO_MESSAGE_INTENT[
                         response.message_intent
@@ -514,11 +479,6 @@ class GrpcPlanningAgentClient:
                     PROTO_TO_BRIEF_FIELD[field]
                     for field in response.corrected_fields
                 ],
-                fields_to_reconfirm=[
-                    PROTO_TO_BRIEF_FIELD[field]
-                    for field
-                    in response.fields_to_reconfirm
-                ],
                 completed_fields=[
                     PROTO_TO_BRIEF_FIELD[field]
                     for field in response.completed_fields
@@ -536,10 +496,6 @@ class GrpcPlanningAgentClient:
                     PROTO_TO_PLANNING_STEP[
                         response.next_step
                     ]
-                ),
-                resume_step=resume_step,
-                ad_copy_candidates=list(
-                    response.ad_copy_candidates
                 ),
                 is_complete=response.is_complete,
             )

@@ -18,9 +18,9 @@ from app.clients.planning_agent import (
 )
 from app.db.session import get_db
 from app.models.enums import (
-    PlanningSessionStatus,
-    TurnEventType,
+    PlanningSessionStatus
 )
+
 from app.schemas.planning_turn import (
     PlanningTurnRequest,
     PlanningTurnResponse,
@@ -129,19 +129,6 @@ async def process_planning_turn(
             planning_session.id
         )
     )
-
-    # 이미지 업로드 이벤트는 실제 파일이 확인된 경우에만 전달
-    if (
-        request.event_type
-        == TurnEventType.IMAGE_UPLOADED
-        and not original_image_uploaded
-    ):
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail=(
-                "등록된 원본 이미지를 확인할 수 없습니다."
-            ),
-        )
 
     try:
         return await planning_agent_client.process_turn(
