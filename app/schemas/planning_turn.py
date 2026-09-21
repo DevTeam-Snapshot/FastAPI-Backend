@@ -7,7 +7,6 @@ from pydantic import (
     ConfigDict,
     Field,
     field_validator,
-    model_validator,
 )
 
 from app.models.enums import (
@@ -17,7 +16,6 @@ from app.models.enums import (
     LodgingType,
     MessageIntent,
     PlanningStep,
-    TurnEventType,
 )
 
 
@@ -127,19 +125,12 @@ class ConversationMessage(BaseModel):
 
 # 한 번의 사용자 답변을 모델에 전달하는 REST 요청
 class PlanningTurnRequest(BaseModel):
-    state_revision: int = Field(ge=0)
-    event_type: TurnEventType
-    user_message: str = ""
+    user_message: str = Field(min_length = 1)
     current_step: PlanningStep
     brief: PlanningBrief
 
     fields_to_reconfirm: list[BriefField] = Field(
         default_factory=list,
-    )
-    resume_step: PlanningStep | None = None
-    ad_copy_candidates: list[str] = Field(
-        default_factory=list,
-        max_length=3,
     )
     conversation_history: list[
         ConversationMessage
@@ -148,51 +139,21 @@ class PlanningTurnRequest(BaseModel):
         max_length=12,
     )
 
-    # 후보 문구의 공백 제거
-    @field_validator("ad_copy_candidates")
+    # 사용자 메시지 규칙 검사
+    @field_validator("user_message")
     @classmethod
-    def strip_ad_copy_candidates(
+    def strip_user_message(
         cls,
-        values: list[str],
-    ) -> list[str]:
-        cleaned_values = [
-            value.strip()
-            for value in values
-        ]
+        value: str
+    ) -> str:
+    cleaned_value = value.strip()
 
-        if any(not value for value in cleaned_values):
-            raise ValueError(
-                "광고 문구 후보에는 빈 값을 넣을 수 없습니다."
-            )
+    if not cleaned_values:
+        raise ValueError(
+            "사용자의 메시지가 필요합니다."
+        )
 
-        return cleaned_values
-
-    # 이벤트 종류에 따라 메시지 규칙 검사
-    @model_validator(mode="after")
-    def validate_event_message(
-        self,
-    ) -> "PlanningTurnRequest":
-        self.user_message = self.user_message.strip()
-
-        if (
-            self.event_type
-            == TurnEventType.USER_MESSAGE
-            and not self.user_message
-        ):
-            raise ValueError(
-                "사용자 메시지 이벤트에는 내용이 필요합니다."
-            )
-
-        if (
-            self.event_type
-            == TurnEventType.IMAGE_UPLOADED
-            and self.user_message
-        ):
-            raise ValueError(
-                "이미지 업로드 이벤트에는 메시지를 함께 보낼 수 없습니다."
-            )
-
-        return self
+    return cleaned_value
 
     model_config = ConfigDict(extra="forbid")
 
@@ -203,27 +164,23 @@ BriefPatchValue = str | list[str] | None
 
 # 한 번의 기획 대화 결과
 class PlanningTurnResponse(BaseModel):
-    request_id: str
-    session_id: str
-    state_revision: int
+    request_id: str                     # 요청 번호
+    session_id: str                     # 세션 ID UUID
 
     message_intent: MessageIntent
-    answer_status: AnswerStatus
-    assistant_message: str
+    answer_status: AnswerStatus         # 답변 상태
+    assistant_message: str              # 질문
 
     # 응답에 포함된 필드만 React의 임시 기획서에 반영
     brief_updates: dict[str, BriefPatchValue]
 
     corrected_fields: list[BriefField]
-    fields_to_reconfirm: list[BriefField]
     completed_fields: list[BriefField]
     missing_fields: list[BriefField]
 
     current_step: PlanningStep
     next_step: PlanningStep
-    resume_step: PlanningStep | None
 
-    ad_copy_candidates: list[str]
     is_complete: bool
 
     model_config = ConfigDict(extra="forbid")
