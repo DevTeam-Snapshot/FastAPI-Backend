@@ -129,9 +129,6 @@ class PlanningTurnRequest(BaseModel):
     current_step: PlanningStep
     brief: PlanningBrief
 
-    fields_to_reconfirm: list[BriefField] = Field(
-        default_factory=list,
-    )
     conversation_history: list[
         ConversationMessage
     ] = Field(
@@ -146,14 +143,14 @@ class PlanningTurnRequest(BaseModel):
         cls,
         value: str
     ) -> str:
-    cleaned_value = value.strip()
+        cleaned_value = value.strip()
 
-    if not cleaned_values:
-        raise ValueError(
-            "사용자의 메시지가 필요합니다."
-        )
+        if not cleaned_value:
+            raise ValueError(
+                "사용자의 메시지가 필요합니다."
+            )
 
-    return cleaned_value
+        return cleaned_value
 
     model_config = ConfigDict(extra="forbid")
 

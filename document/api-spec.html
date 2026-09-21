@@ -182,6 +182,7 @@
       <a href="#turns">기획 대화</a>
       <a href="#drafts">광고 초안</a>
       <a href="#images">이미지</a>
+      <a href="#fields">필드 설명</a>
       <a href="#errors">오류</a>
     </nav>
 
@@ -380,8 +381,6 @@
         <p>사용자의 답변과 현재 임시 기획서를 모델에 전달하고 다음 질문을 받습니다.</p>
         <h4>Request Body</h4>
         <pre><code>{
-  "state_revision": 0,
-  "event_type": "user_message",
   "user_message": "호텔 광고를 만들고 싶어요",
   "current_step": "lodging_type",
   "brief": {
@@ -395,28 +394,21 @@
     "color_preference": null,
     "ad_copy": null
   },
-  "fields_to_reconfirm": [],
-  "resume_step": null,
-  "ad_copy_candidates": [],
   "conversation_history": []
 }</code></pre>
         <h4>Response Body · 200 OK</h4>
         <pre><code>{
   "request_id": "모델 요청 UUID",
   "session_id": "기획 세션 UUID",
-  "state_revision": 1,
   "message_intent": "answer",
   "answer_status": "valid",
   "assistant_message": "숙소 이름과 위치를 알려주세요.",
   "brief_updates": {"lodging_type": "hotel"},
   "corrected_fields": [],
-  "fields_to_reconfirm": [],
   "completed_fields": ["lodging_type"],
   "missing_fields": ["lodging_name", "location", "selling_points"],
   "current_step": "lodging_type",
   "next_step": "lodging_information",
-  "resume_step": null,
-  "ad_copy_candidates": [],
   "is_complete": false
 }</code></pre>
       </article>
@@ -594,8 +586,82 @@
       </table>
     </section>
 
+    <section id="fields">
+      <h2>7. 주요 필드 설명</h2>
+      <div class="note">React는 모델을 직접 호출하지 않습니다. 현재 화면 상태와 사용자 입력을 FastAPI에 보내고, FastAPI 응답을 화면 상태에 반영합니다.</div>
+
+      <h3>기획 대화 Request Body</h3>
+      <table>
+        <thead><tr><th>필드</th><th>형식</th><th>React에서의 역할</th></tr></thead>
+        <tbody>
+          <tr><td><code>user_message</code></td><td>string</td><td>사용자가 이번 차례에 새로 입력한 답변입니다.</td></tr>
+          <tr><td><code>current_step</code></td><td>string</td><td>현재 질문 카테고리입니다. 응답의 <code>next_step</code>을 다음 요청에 사용합니다.</td></tr>
+          <tr><td><code>brief</code></td><td>object</td><td>지금까지 React가 임시 보관한 전체 기획서입니다. 매 요청마다 최신 값을 보냅니다.</td></tr>
+          <tr><td><code>conversation_history</code></td><td>object[]</td><td>모델이 문맥을 판단할 최근 대화입니다. 최대 12개이며 직전 질문만 보내는 방식도 가능합니다.</td></tr>
+        </tbody>
+      </table>
+
+      <h3>임시 기획서 <code>brief</code></h3>
+      <table>
+        <thead><tr><th>필드</th><th>역할</th></tr></thead>
+        <tbody>
+          <tr><td><code>lodging_type</code></td><td>숙소 유형: hotel, motel, resort, pension, other</td></tr>
+          <tr><td><code>lodging_type_detail</code></td><td>숙소 유형이 other일 때 사용하는 직접 입력값</td></tr>
+          <tr><td><code>lodging_name</code></td><td>숙소 이름</td></tr>
+          <tr><td><code>location</code></td><td>숙소 위치 또는 주소</td></tr>
+          <tr><td><code>selling_points</code></td><td>광고에서 강조할 숙소 매력 목록, 최대 5개</td></tr>
+          <tr><td><code>target_audience</code></td><td>광고 대상 고객</td></tr>
+          <tr><td><code>mood</code></td><td>원하는 광고 분위기</td></tr>
+          <tr><td><code>color_preference</code></td><td>광고 이미지에서 선호하는 색상</td></tr>
+          <tr><td><code>ad_copy</code></td><td>최종 광고 문구</td></tr>
+        </tbody>
+      </table>
+      <div class="note">값이 <code>null</code>이거나 빈 배열이면 아직 수집하지 않은 항목입니다. 모델 응답의 <code>brief_updates</code>만 기존 brief에 합쳐서 갱신합니다.</div>
+
+      <h3>기획 대화 Response Body</h3>
+      <table>
+        <thead><tr><th>필드</th><th>React에서의 역할</th></tr></thead>
+        <tbody>
+          <tr><td><code>request_id</code></td><td>모델 요청을 추적하기 위한 ID입니다. 오류 문의와 로그 확인에 사용할 수 있습니다.</td></tr>
+          <tr><td><code>session_id</code></td><td>현재 광고 기획 세션 ID입니다.</td></tr>
+          <tr><td><code>message_intent</code></td><td>사용자의 이번 발화 의도입니다. <code>answer</code>는 현재 질문에 대한 답변, <code>correction</code>은 이전 정보 수정, <code>question</code>은 사용자의 질문, <code>system_event</code>는 시스템 동작을 뜻합니다.</td></tr>
+          <tr><td><code>answer_status</code></td><td>답변 판정 결과: valid, ambiguous, off_topic, not_applicable</td></tr>
+          <tr><td><code>assistant_message</code></td><td>React 채팅창에 표시할 모델의 다음 질문 또는 안내 메시지입니다.</td></tr>
+          <tr><td><code>brief_updates</code></td><td>임시 기획서에서 변경할 값입니다. 기존 brief에 합쳐서 저장합니다.</td></tr>
+          <tr><td><code>corrected_fields</code></td><td>사용자의 수정 요청으로 값이 변경된 항목입니다.</td></tr>
+          <tr><td><code>completed_fields</code></td><td>입력이 완료된 기획서 항목입니다.</td></tr>
+          <tr><td><code>missing_fields</code></td><td>아직 입력되지 않은 필수 항목입니다.</td></tr>
+          <tr><td><code>current_step</code></td><td>이번 응답을 처리한 현재 단계입니다.</td></tr>
+          <tr><td><code>next_step</code></td><td>다음 질문 단계입니다. 다음 요청의 current_step으로 사용합니다.</td></tr>
+          <tr><td><code>is_complete</code></td><td>true이면 기획 질문이 완료된 상태입니다. 확인 버튼을 활성화할 수 있습니다.</td></tr>
+        </tbody>
+      </table>
+
+      <h3>광고 초안 Response Body</h3>
+      <table>
+        <thead><tr><th>필드</th><th>React에서의 역할</th></tr></thead>
+        <tbody>
+          <tr><td><code>id</code></td><td>광고 초안 UUID이며 조회·선택 시 draft_id로 사용합니다.</td></tr>
+          <tr><td><code>session_id</code></td><td>초안이 속한 기획 세션 UUID입니다.</td></tr>
+          <tr><td><code>generation_round</code></td><td>1은 최초 생성, 2는 재생성 결과입니다.</td></tr>
+          <tr><td><code>direction</code></td><td>초안 방향: room, emotion, benefit</td></tr>
+          <tr><td><code>status</code></td><td>생성 상태: pending, processing, completed, failed</td></tr>
+          <tr><td><code>image_url</code></td><td>화면에 이미지를 표시할 상대 URL입니다. 백엔드 Base URL을 앞에 붙입니다.</td></tr>
+          <tr><td><code>mime_type</code></td><td>생성된 파일 형식이며 정상 결과는 image/png입니다.</td></tr>
+          <tr><td><code>file_size</code></td><td>생성 이미지의 byte 크기입니다.</td></tr>
+          <tr><td><code>is_selected</code></td><td>사용자가 최종 선택한 초안인지 나타냅니다.</td></tr>
+          <tr><td><code>error_code</code></td><td>생성 실패 시 오류 종류를 나타냅니다.</td></tr>
+          <tr><td><code>error_message</code></td><td>생성 실패 시 사용자 또는 로그에서 확인할 오류 설명입니다.</td></tr>
+          <tr><td><code>created_at</code></td><td>초안 레코드 생성 시각입니다.</td></tr>
+          <tr><td><code>updated_at</code></td><td>초안 상태가 마지막으로 변경된 시각입니다.</td></tr>
+          <tr><td><code>completed_at</code></td><td>이미지 생성 완료 시각이며 완료 전에는 null입니다.</td></tr>
+          <tr><td><code>regeneration_used</code></td><td>해당 기획 세션의 재생성 기회를 성공적으로 사용했는지 나타냅니다.</td></tr>
+        </tbody>
+      </table>
+    </section>
+
     <section id="errors">
-      <h2>7. 공통 오류 응답</h2>
+      <h2>8. 공통 오류 응답</h2>
       <table>
         <thead><tr><th>HTTP 상태</th><th>의미</th></tr></thead>
         <tbody>

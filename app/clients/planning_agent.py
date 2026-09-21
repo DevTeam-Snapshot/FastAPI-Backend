@@ -302,11 +302,11 @@ class GrpcPlanningAgentClient:
                 session_id=str(session_id),
 
                 # FastAPI에서만 기획단계 확인
-                state_revision=request.state_revision,
+                state_revision=0,
                 event_type=(
                     hotel_ad_v2_pb2
                     .TURN_EVENT_TYPE_USER_MESSAGE
-                )
+                ),
                 user_message=request.user_message,
                 current_step=PLANNING_STEP_TO_PROTO[
                     request.current_step
