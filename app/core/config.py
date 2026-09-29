@@ -38,6 +38,10 @@ class Settings(BaseSettings):
     # V2 초안 이미지 생성 RPC 제한 시간
     draft_model_timeout_seconds: float
 
+    # V2 초안 이미지 크기
+    draft_image_width: int
+    draft_image_height: int
+
     # .env파일을 utf-8형식으로 읽기
     model_config = SettingsConfigDict(
         env_file = '.env',

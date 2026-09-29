@@ -206,7 +206,7 @@ message GenerateDraftResponse {
   string draft_id = 3;
   uint32 generation_round = 4;
   DraftDirection direction = 5;
-  bytes image_bytes = 6; // 1024x1024 PNG with composed Korean copy, <=25 MiB.
+  bytes image_bytes = 6; // 1080x1350 PNG with composed Korean copy, <=25 MiB.
   string image_mime_type = 7; // Always image/png.
 }
 
