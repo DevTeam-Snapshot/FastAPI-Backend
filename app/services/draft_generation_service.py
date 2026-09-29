@@ -41,6 +41,8 @@ from app.services.image_validation import (
     image_validator,
 )
 
+from app.core.config import get_settings
+
 
 logger = logging.getLogger(__name__)
 
@@ -61,11 +63,15 @@ class DraftGenerationService:
             self,
             client: DraftImageClient,
             storage: ImageStorage,
-            validator: ImageValidator
+            validator: ImageValidator,
+            expected_width: int,
+            expected_height: int,
     ) -> None:
         self.client = client
         self.storage = storage
         self.validator = validator
+        self.expected_width = expected_width
+        self.expected_height = expected_height
 
     # DB의 확정 기획서를 모델 요청 형식으로 변환
     def build_brief(
@@ -268,16 +274,17 @@ class DraftGenerationService:
                 message="모델이 올바르지 않은 PNG 이미지를 반환했습니다.",
             ) from error
 
-        # V2 모델 결과는 정확히 1024×1024 PNG여야 함
+        # V2 모델 결과는 4:5 비율로
         if (
-            validated_image.width != 1024
-            or validated_image.height != 1024
+            validated_image.width != self.expected_width
+            or validated_image.height != self.expected_height
         ):
             raise DraftResultProcessingError(
                 error_code="MODEL_OUTPUT_INVALID",
                 message=(
                     "모델 결과 이미지의 크기가 "
-                    "1024×1024가 아닙니다."
+                    f"{self.expected_width}x"
+                    f"{self.expected_height}가 아닙니다."
                 ),
             )
 
@@ -470,8 +477,12 @@ class DraftGenerationService:
 
         return drafts
 
+settings = get_settings()
+
 draft_generation_service = DraftGenerationService(
     client=draft_image_client,
     storage=image_storage,
     validator=image_validator,
+    expected_width=settings.draft_image_width,
+    expected_height=settings.draft_image_height,
 )
