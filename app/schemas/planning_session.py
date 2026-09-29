@@ -9,10 +9,16 @@ from app.models.enums import (
     PlanningSessionStatus,
 )
 
-# 숙소 매력포인트 입력 규칙
+# 객실 내외부 특징 입력 규칙
 SellingPoint = Annotated[
     str,
     Field(min_length=1, max_length=100)
+]
+
+# 숙소 서비스 혜택 입력 규칙
+LodgingService = Annotated[
+    str,
+    Field(min_length=1, max_length=100),
 ]
 
 # 기획 세션 완료 후 전달하는 최종 광고 기획서
@@ -39,9 +45,9 @@ class PlanningSessionConfirmRequest(BaseModel):
         max_length=5
     )
 
-    target_audience: str = Field(
+    lodging_service: list[LodgingService] = Field(
         min_length=1,
-        max_length=100,
+        max_length=5,
     )
 
     mood: str = Field(
@@ -50,6 +56,11 @@ class PlanningSessionConfirmRequest(BaseModel):
     )
 
     color_preference: str = Field(
+        min_length=1,
+        max_length=100,
+    )
+
+    target_audience: str = Field(
         min_length=1,
         max_length=100,
     )
@@ -108,6 +119,25 @@ class PlanningSessionConfirmRequest(BaseModel):
 
         return cleaned_values
 
+    # 숙소 서비스·혜택 각 항목의 공백 제거
+    @field_validator("lodging_service")
+    @classmethod
+    def strip_lodging_service(
+        cls,
+        values: list[str],
+    ) -> list[str]:
+        cleaned_values = [
+            value.strip()
+            for value in values
+        ]
+
+        if any(not value for value in cleaned_values):
+            raise ValueError(
+                "숙소 서비스에는 공백만 입력할 수 없습니다."
+            )
+
+        return cleaned_values
+
     # other 선택 시에만 세부 숙소 유형 필수
     @model_validator(mode="after")
     def validate_lodging_type_detail(
@@ -140,10 +170,11 @@ class PlanningSessionResponse(BaseModel):
     lodging_type_detail: str | None     # 기타 숙소 유형
     lodging_name: str | None            # 숙소 이름
     location: str | None                # 숙소 위치
-    selling_points: list[str] | None    # 숙소 매력 포인트
-    target_audience: str | None         # 홍보 타겟
+    selling_points: list[str] | None    # 숙소 객실 내외부 특징
+    lodging_service: list[str] | None   # 숙소 서비스 및 혜택
     mood: str | None                    # 홍보물 분위기
     color_preference: str | None        # 선호하는 색상
+    target_audience: str | None         # 홍보 타겟
     ad_copy: str | None                 # 광고 문구
 
     original_filename: str | None       # 원본 이미지 이름

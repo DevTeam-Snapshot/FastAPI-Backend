@@ -59,15 +59,15 @@ class PlanningSession(Base):
         nullable=True,
     )
 
-    # 사용자가 강조하고 싶은 숙소의 매력 목록
+    # 객실 내외부 특징
     selling_points: Mapped[list[str] | None] = mapped_column(
         JSONB,
         nullable=True,
     )
 
-    # 광고 대상
-    target_audience: Mapped[str | None] = mapped_column(
-        String(100),
+    # 숙소에서 제공하는 서비스와 혜택
+    lodging_service: Mapped[list[str] | None] = mapped_column(
+        JSONB,
         nullable=True,
     )
 
@@ -79,6 +79,12 @@ class PlanningSession(Base):
 
     # 선호 색상 또는 모델에게 위임하는 auto
     color_preference: Mapped[str | None] = mapped_column(
+        String(100),
+        nullable=True,
+    )
+
+    # 광고 대상
+    target_audience: Mapped[str | None] = mapped_column(
         String(100),
         nullable=True,
     )

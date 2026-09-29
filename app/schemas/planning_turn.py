@@ -24,6 +24,10 @@ SellingPoint = Annotated[
     Field(min_length=1, max_length=100),
 ]
 
+LodgingService = Annotated[
+    str,
+    Field(min_length=1, max_length=100),
+]
 
 # React가 관리하는 현재 임시 광고 기획서
 class PlanningBrief(BaseModel):
@@ -44,15 +48,19 @@ class PlanningBrief(BaseModel):
         default_factory=list,
         max_length=5,
     )
-    target_audience: str | None = Field(
-        default=None,
-        max_length=100,
+    lodging_service: list[LodgingService] = Field(
+        default_factory=list,
+        max_length=5,
     )
     mood: str | None = Field(
         default=None,
         max_length=100,
     )
     color_preference: str | None = Field(
+        default=None,
+        max_length=100,
+    )
+    target_audience: str | None = Field(
         default=None,
         max_length=100,
     )
@@ -81,7 +89,7 @@ class PlanningBrief(BaseModel):
 
         return value.strip() or None
 
-    # 매력 포인트의 앞뒤 공백 제거
+    # 객실 내외부 특징의 앞뒤 공백 제거
     @field_validator("selling_points")
     @classmethod
     def strip_selling_points(
@@ -100,8 +108,26 @@ class PlanningBrief(BaseModel):
 
         return cleaned_values
 
-    model_config = ConfigDict(extra="forbid")
+    # 숙소 서비스·혜택의 앞뒤 공백 제거
+    @field_validator("lodging_service")
+    @classmethod
+    def strip_lodging_service(
+        cls,
+        values: list[str],
+    ) -> list[str]:
+        cleaned_values = [
+            value.strip()
+            for value in values
+        ]
 
+        if any(not value for value in cleaned_values):
+            raise ValueError(
+                "숙소 서비스에는 공백만 입력할 수 없습니다."
+            )
+
+        return cleaned_values
+
+    model_config = ConfigDict(extra="forbid")
 
 # 모델이 대화 문맥으로 참고할 최근 메시지
 class ConversationMessage(BaseModel):
