@@ -192,7 +192,8 @@
         <div class="summary-card"><strong>로컬 Base URL</strong><br><code>http://127.0.0.1:8000</code></div>
         <div class="summary-card"><strong>Docker Base URL</strong><br><code>http://127.0.0.1:9000</code></div>
         <div class="summary-card"><strong>요청·응답 형식</strong><br>JSON / multipart/form-data</div>
-        <div class="summary-card"><strong>이미지 형식</strong><br>JPEG, PNG, WebP · 최대 25MiB</div>
+        <div class="summary-card"><strong>원본 이미지</strong><br>JPEG, PNG, WebP · 최대 25MiB</div>
+        <div class="summary-card"><strong>광고 초안</strong><br>PNG · 1080 × 1350</div>
       </div>
       <div class="note">대화 도중의 임시 기획서는 React가 관리하며, 최종 기획서만 확정 API를 통해 DB에 저장합니다.</div>
     </section>
@@ -254,9 +255,10 @@
   "lodging_name": null,
   "location": null,
   "selling_points": null,
-  "target_audience": null,
+  "lodging_service": null,
   "mood": null,
   "color_preference": null,
+  "target_audience": null,
   "ad_copy": null,
   "original_filename": null,
   "original_image_url": null,
@@ -286,10 +288,11 @@
   "lodging_type_detail": null,
   "lodging_name": "스냅샷 오션 호텔",
   "location": "부산광역시 해운대구",
-  "selling_points": ["오션뷰", "해변 도보 3분"],
-  "target_audience": "커플 여행객",
+  "selling_points": ["객실에서 보이는 바다 전망", "넓고 쾌적한 객실"],
+  "lodging_service": ["무료 조식", "해변 픽업 서비스"],
   "mood": "밝고 시원한 여름 분위기",
   "color_preference": "파란색과 흰색",
+  "target_audience": "커플 여행객",
   "ad_copy": "파도와 함께 시작하는 특별한 하루",
   "original_filename": "hotel.webp",
   "original_image_url": "/images/requests/세션-UUID/original.webp",
@@ -343,10 +346,11 @@
   "lodging_type_detail": null,
   "lodging_name": "스냅샷 오션 호텔",
   "location": "부산광역시 해운대구",
-  "selling_points": ["오션뷰", "해변 도보 3분"],
-  "target_audience": "커플 여행객",
+  "selling_points": ["객실에서 보이는 바다 전망", "넓고 쾌적한 객실"],
+  "lodging_service": ["무료 조식", "해변 픽업 서비스"],
   "mood": "밝고 시원한 여름 분위기",
   "color_preference": "파란색과 흰색",
+  "target_audience": "커플 여행객",
   "ad_copy": "파도와 함께 시작하는 특별한 하루"
 }</code></pre>
         <h4>Response Body · 200 OK</h4>
@@ -356,10 +360,11 @@
   "lodging_type": "hotel",
   "lodging_name": "스냅샷 오션 호텔",
   "location": "부산광역시 해운대구",
-  "selling_points": ["오션뷰", "해변 도보 3분"],
-  "target_audience": "커플 여행객",
+  "selling_points": ["객실에서 보이는 바다 전망", "넓고 쾌적한 객실"],
+  "lodging_service": ["무료 조식", "해변 픽업 서비스"],
   "mood": "밝고 시원한 여름 분위기",
   "color_preference": "파란색과 흰색",
+  "target_audience": "커플 여행객",
   "ad_copy": "파도와 함께 시작하는 특별한 하루",
   "original_image_url": "/images/requests/세션-UUID/original.webp",
   "regeneration_used": false,
@@ -389,9 +394,10 @@
     "lodging_name": null,
     "location": null,
     "selling_points": [],
-    "target_audience": null,
+    "lodging_service": [],
     "mood": null,
     "color_preference": null,
+    "target_audience": null,
     "ad_copy": null
   },
   "conversation_history": []
@@ -406,11 +412,12 @@
   "brief_updates": {"lodging_type": "hotel"},
   "corrected_fields": [],
   "completed_fields": ["lodging_type"],
-  "missing_fields": ["lodging_name", "location", "selling_points"],
+  "missing_fields": ["lodging_name", "location", "selling_points", "lodging_service", "mood", "color_preference", "target_audience", "ad_copy"],
   "current_step": "lodging_type",
   "next_step": "lodging_information",
   "is_complete": false
 }</code></pre>
+        <div class="note">진행 순서: lodging_type → lodging_information → selling_points → lodging_service → mood → color_preference → target_audience → ad_copy → complete</div>
       </article>
     </section>
 
@@ -609,10 +616,11 @@
           <tr><td><code>lodging_type_detail</code></td><td>숙소 유형이 other일 때 사용하는 직접 입력값</td></tr>
           <tr><td><code>lodging_name</code></td><td>숙소 이름</td></tr>
           <tr><td><code>location</code></td><td>숙소 위치 또는 주소</td></tr>
-          <tr><td><code>selling_points</code></td><td>광고에서 강조할 숙소 매력 목록, 최대 5개</td></tr>
-          <tr><td><code>target_audience</code></td><td>광고 대상 고객</td></tr>
+          <tr><td><code>selling_points</code></td><td>객실, 전망, 공간, 시설 등 공간 중심 특징 목록, 최대 5개</td></tr>
+          <tr><td><code>lodging_service</code></td><td>무료 조식, 픽업, 할인 등 서비스·혜택 목록, 최대 5개</td></tr>
           <tr><td><code>mood</code></td><td>원하는 광고 분위기</td></tr>
           <tr><td><code>color_preference</code></td><td>광고 이미지에서 선호하는 색상</td></tr>
+          <tr><td><code>target_audience</code></td><td>광고 대상 고객</td></tr>
           <tr><td><code>ad_copy</code></td><td>최종 광고 문구</td></tr>
         </tbody>
       </table>

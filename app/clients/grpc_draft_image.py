@@ -125,11 +125,14 @@ class GrpcDraftImageClient:
             selling_points=list(
                 request.brief.selling_points
             ),
-            target_audience=request.brief.target_audience,
+            lodging_service=list(
+                request.brief.lodging_service
+            ),
             mood=request.brief.mood,
             color_preference=(
                 request.brief.color_preference
             ),
+            target_audience=request.brief.target_audience,
             ad_copy=request.brief.ad_copy,
         )
 

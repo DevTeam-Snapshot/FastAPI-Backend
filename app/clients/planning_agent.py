@@ -61,11 +61,17 @@ PLANNING_STEP_TO_PROTO = {
     PlanningStep.SELLING_POINTS: (
         hotel_ad_v2_pb2.PLANNING_STEP_SELLING_POINTS
     ),
-    PlanningStep.TARGET_AUDIENCE: (
-        hotel_ad_v2_pb2.PLANNING_STEP_TARGET_AUDIENCE
+    PlanningStep.LODGING_SERVICE: (
+        hotel_ad_v2_pb2.PLANNING_STEP_LODGING_SERVICE
     ),
     PlanningStep.MOOD: (
         hotel_ad_v2_pb2.PLANNING_STEP_MOOD
+    ),
+    PlanningStep.COLOR_PREFERENCE: (
+        hotel_ad_v2_pb2.PLANNING_STEP_COLOR_PREFERENCE
+    ),
+    PlanningStep.TARGET_AUDIENCE: (
+        hotel_ad_v2_pb2.PLANNING_STEP_TARGET_AUDIENCE
     ),
     PlanningStep.AD_COPY: (
         hotel_ad_v2_pb2.PLANNING_STEP_AD_COPY
@@ -100,6 +106,9 @@ BRIEF_FIELD_TO_PROTO = {
     ),
     BriefField.SELLING_POINTS: (
         hotel_ad_v2_pb2.BRIEF_FIELD_SELLING_POINTS
+    ),
+    BriefField.LODGING_SERVICE: (
+        hotel_ad_v2_pb2.BRIEF_FIELD_LODGING_SERVICE
     ),
     BriefField.ORIGINAL_IMAGE: (
         hotel_ad_v2_pb2.BRIEF_FIELD_ORIGINAL_IMAGE
@@ -286,6 +295,9 @@ class GrpcPlanningAgentClient:
         proto_brief.selling_points.extend(
             brief.selling_points
         )
+        proto_brief.lodging_service.extend(
+            brief.lodging_service
+        )
 
         return proto_brief
 
@@ -349,11 +361,15 @@ class GrpcPlanningAgentClient:
         for descriptor, change in patch.ListFields():
             field_name = descriptor.name
 
-            # 매력 포인트는 기존 목록을 통째로 교체
-            if field_name == "selling_points":
+            # 목록 필드는 기존 목록에 추가하지않고 전체 교체
+            if field_name in {
+                "selling_points",
+                "lodging_service",
+            }:
                 updates[field_name] = list(
                     change.values
                 )
+
                 continue
 
             operation = change.WhichOneof(
