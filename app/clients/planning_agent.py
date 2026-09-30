@@ -126,6 +126,67 @@ BRIEF_FIELD_TO_PROTO = {
         hotel_ad_v2_pb2.BRIEF_FIELD_AD_COPY
     ),
     }
+# 현재 단계에서 이동할 수 있는 바로 다음 단계
+EXPECTED_NEXT_STEP = {
+    PlanningStep.LODGING_TYPE: (
+        PlanningStep.LODGING_INFORMATION
+    ),
+    PlanningStep.LODGING_INFORMATION: (
+        PlanningStep.SELLING_POINTS
+    ),
+    PlanningStep.SELLING_POINTS: (
+        PlanningStep.LODGING_SERVICE
+    ),
+    PlanningStep.LODGING_SERVICE: (
+        PlanningStep.MOOD
+    ),
+    PlanningStep.MOOD: (
+        PlanningStep.COLOR_PREFERENCE
+    ),
+    PlanningStep.COLOR_PREFERENCE: (
+        PlanningStep.TARGET_AUDIENCE
+    ),
+    PlanningStep.TARGET_AUDIENCE: (
+        PlanningStep.AD_COPY
+    ),
+    PlanningStep.AD_COPY: (
+        PlanningStep.COMPLETE
+    ),
+    PlanningStep.COMPLETE: (
+        PlanningStep.COMPLETE
+    ),
+}
+
+# 일반 답변에서 현재 단계별로 변경 가능한 기획서 필드
+STEP_UPDATE_FIELDS = {
+    PlanningStep.LODGING_TYPE: {
+        "lodging_type",
+        "lodging_type_detail",
+    },
+    PlanningStep.LODGING_INFORMATION: {
+        "lodging_name",
+        "location",
+    },
+    PlanningStep.SELLING_POINTS: {
+        "selling_points",
+    },
+    PlanningStep.LODGING_SERVICE: {
+        "lodging_service",
+    },
+    PlanningStep.MOOD: {
+        "mood",
+    },
+    PlanningStep.COLOR_PREFERENCE: {
+        "color_preference",
+    },
+    PlanningStep.TARGET_AUDIENCE: {
+        "target_audience",
+    },
+    PlanningStep.AD_COPY: {
+        "ad_copy",
+    },
+    PlanningStep.COMPLETE: set(),
+}
     
 PROTO_TO_LODGING_TYPE = {
     value: key
@@ -536,6 +597,72 @@ class GrpcPlanningAgentClient:
                 retryable=False,
             ) from error
 
+    # 모델이 허용된 단계와 필드만 변경했는지 검사
+    def validate_turn_logic(
+        self,
+        request: PlanningTurnRequest,
+        response: PlanningTurnResponse,
+    ) -> None:
+        expected_next_step = EXPECTED_NEXT_STEP[
+            request.current_step
+        ]
+
+        allowed_next_steps = {
+            request.current_step,
+            expected_next_step,
+        }
+
+        # 현재 단계 유지 또는 바로 다음 단계만 허용
+        if response.next_step not in allowed_next_steps:
+            raise PlanningAgentClientError(
+                reason="MODEL_OUTPUT_INVALID",
+                message=(
+                    "모델이 허용되지 않은 단계로 "
+                    "이동하려고 했습니다: "
+                    f"{request.current_step.value} -> "
+                    f"{response.next_step.value}"
+                ),
+                retryable=False,
+            )
+
+        # 일반 답변은 현재 단계 필드만 변경 가능
+        if response.message_intent == MessageIntent.ANSWER:
+            allowed_update_fields = STEP_UPDATE_FIELDS[
+                request.current_step
+            ]
+
+        # 수정 요청은 corrected_fields로 명시한 필드만 허용
+        elif (
+            response.message_intent
+            == MessageIntent.CORRECTION
+        ):
+            allowed_update_fields = {
+                field.value
+                for field in response.corrected_fields
+            }
+
+        # 질문과 시스템 이벤트는 기획서를 변경하지 않음
+        else:
+            allowed_update_fields = set()
+
+        unexpected_fields = (
+            set(response.brief_updates)
+            - allowed_update_fields
+        )
+
+        if unexpected_fields:
+            raise PlanningAgentClientError(
+                reason="MODEL_OUTPUT_INVALID",
+                message=(
+                    "모델이 현재 단계와 관계없는 "
+                    "기획서 필드를 변경했습니다: "
+                    + ", ".join(
+                        sorted(unexpected_fields)
+                    )
+                ),
+                retryable=False,
+            )
+
     # 모델 서버에 한 번의 기획 대화 요청
     async def process_turn(
         self,
@@ -590,9 +717,16 @@ class GrpcPlanningAgentClient:
             response=response,
         )
 
-        return self.build_domain_response(
+        domain_response = self.build_domain_response(
             response
         )
+
+        self.validate_turn_logic(
+            request=request,
+            response=domain_response,
+        )
+
+        return domain_response
 
 settings = get_settings()
 
