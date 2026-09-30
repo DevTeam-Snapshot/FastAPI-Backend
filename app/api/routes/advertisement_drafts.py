@@ -66,11 +66,20 @@ async def create_initial_drafts(
             detail = str(error)
         ) from error
 
-    # 완료된 기획 세션만 초안 생성 가능
-    if planning_session.status != PlanningSessionStatus.CONFIRMED.value:
+    # confirmed: 최초 초안 생성
+    # generating: 모델 오류로 실패한 1회차 초안 재시도
+    allowed_statuses = {
+        PlanningSessionStatus.CONFIRMED.value,
+        PlanningSessionStatus.GENERATING.value,
+    }
+
+    if planning_session.status not in allowed_statuses:
         raise HTTPException(
-            status_code = status.HTTP_409_CONFLICT,
-            detail = "확정된 기획 세션에서만 광고 초안을 생성할 수 있습니다."
+            status_code=status.HTTP_409_CONFLICT,
+            detail=(
+                "확정된 기획 세션 또는 최초 생성에 실패한 "
+                "세션에서만 광고 초안을 생성할 수 있습니다."
+            ),
         )
 
     try:
