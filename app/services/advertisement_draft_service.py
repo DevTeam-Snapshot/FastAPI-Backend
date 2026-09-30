@@ -440,6 +440,23 @@ class AdvertisementDraftService:
                 "해당 광고 초안을 조회하지 못했습니다."
             ) from error
 
+    # draft_id로 광고 초안 한 개 조회
+    def get_draft_by_id(
+            self,
+            db: Session,
+            draft_id: UUID,
+    ) -> AdvertisementDraft | None:
+        try:
+            return db.get(
+                AdvertisementDraft,
+                draft_id,
+            )
+
+        except SQLAlchemyError as error:
+            raise RuntimeError(
+                "광고 초안을 조회하지 못했습니다."
+            ) from error
+
     # 완성된 광고 초안 한 개를 최종 선택
     def select_draft(
             self,
