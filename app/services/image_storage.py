@@ -144,6 +144,24 @@ class ImageStorage:
 
         return file_path, image_url
 
+    # UUID에 해당하는 생성 이미지 파일 경로 조회
+    def get_generated_path(
+            self,
+            generation_id: UUID,
+    ) -> Path:
+        file_path = (
+            self.results_dir
+            / str(generation_id)
+            / "generated.png"
+        )
+
+        if not file_path.is_file():
+            raise FileNotFoundError(
+                "생성된 광고 이미지 파일을 찾을 수 없습니다."
+            )
+
+        return file_path
+
     # 요청 UUID에 해당하는 원본 이미지 삭제
     def delete_original(
             self,
