@@ -639,7 +639,9 @@ class GrpcPlanningAgentClient:
             allowed_update_fields = {
                 field.value
                 for field in response.corrected_fields
-            }
+            } | STEP_UPDATE_FIELDS[
+                request.current_step
+            ]
 
         # 질문과 시스템 이벤트는 기획서를 변경하지 않음
         else:
