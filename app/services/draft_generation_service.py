@@ -83,9 +83,10 @@ class DraftGenerationService:
             "lodging_name": planning_session.lodging_name,
             "location": planning_session.location,
             "selling_points": planning_session.selling_points,
-            "target_audience": planning_session.target_audience,
+            "lodging_service": planning_session.lodging_service,
             "mood": planning_session.mood,
             "color_preference": planning_session.color_preference,
+            "target_audience": planning_session.target_audience,
             "ad_copy": planning_session.ad_copy,
         }
 
@@ -119,12 +120,15 @@ class DraftGenerationService:
             selling_points=tuple(
                 planning_session.selling_points
             ),
-            target_audience=(
-                planning_session.target_audience
+            lodging_service=tuple(
+                planning_session.lodging_service
             ),
             mood=planning_session.mood,
             color_preference=(
                 planning_session.color_preference
+            ),
+            target_audience=(
+                planning_session.target_audience
             ),
             ad_copy=planning_session.ad_copy,
         )

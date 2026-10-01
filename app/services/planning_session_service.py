@@ -104,21 +104,29 @@ class PlanningSessionService:
             confirm_request.location
         )
 
-        planning_session.selling_points = (         # 매력 포인트
+        planning_session.selling_points = (         # 공간 특징
             confirm_request.selling_points
         )
 
-        planning_session.target_audience = (        # 광고 타깃
-            confirm_request.target_audience
+        planning_session.lodging_service = (        # 서비스와 혜택
+            confirm_request.lodging_service
         )
 
-        planning_session.mood = confirm_request.mood        # 분위기
+        planning_session.mood = (                   # 분위기
+            confirm_request.mood
+        )
 
-        planning_session.color_preference = (               # 색상
+        planning_session.color_preference = (       # 선호 색상
             confirm_request.color_preference
         )
 
-        planning_session.ad_copy = confirm_request.ad_copy  # 광고 문구
+        planning_session.target_audience = (        # 광고 대상
+            confirm_request.target_audience
+        )
+
+        planning_session.ad_copy = (                # 광고 문구
+            confirm_request.ad_copy
+        )
 
         # 기획서 작성 완료 상태와 확정 시각 기록
         planning_session.status = (

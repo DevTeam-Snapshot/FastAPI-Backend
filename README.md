@@ -7,7 +7,7 @@
 
 ## 1. 주요 기능
 
-현재 V2에서는 다음 흐름을 구현합니다.
+V2에서는 다음 흐름을 구현했습니다.
 
 ```text
 React
@@ -17,14 +17,29 @@ React
   → 완성된 기획서 확정
   → A·B·C 광고 초안 생성
   → 초안 선택 또는 1회 재생성
+  → 완성된 광고 이미지 다운로드
+```
+
+광고 기획 질문은 다음 순서로 진행합니다.
+
+```text
+lodging_type
+→ lodging_information
+→ selling_points
+→ lodging_service
+→ mood
+→ color_preference
+→ target_audience
+→ ad_copy
+→ complete
 ```
 
 광고 초안은 세 가지 방향으로 생성합니다.
 
 ```text
-room    : 객실과 숙소 공간 중심
-emotion : 감성과 분위기 중심
-benefit : 숙소의 혜택과 장점 중심
+room    : selling_points를 활용한 객실·전망·공간 중심
+emotion : mood와 color_preference를 활용한 감성·분위기 중심
+benefit : lodging_service를 활용한 서비스·혜택 중심
 ```
 
 초안 상태는 다음과 같이 관리합니다.
@@ -33,6 +48,8 @@ benefit : 숙소의 혜택과 장점 중심
 pending → processing → completed
                      ↘ failed
 ```
+
+모델 또는 외부 서비스 오류로 최초 생성에 실패하면 실패한 1회차 초안만 같은 `draft_id`로 다시 시도합니다. 이 경우 사용자의 재생성 기회는 소모하지 않습니다.
 
 ## 2. Docker Compose 실행 방법
 
@@ -87,11 +104,13 @@ PostgreSQL 데이터는 Docker Volume에 저장되어 유지됩니다.
 - 사용자 답변 전달 및 다음 질문 요청
 - 완성된 광고 기획서 저장
 - A·B·C 광고 초안 생성 및 재생성
+- 최초 초안 생성 실패 재시도
 - 광고 초안 조회 및 최종 선택
 - 원본 이미지와 결과 이미지 조회
+- 완성된 광고 이미지 PNG 다운로드
 - 백엔드 및 모델 서버 상태 확인
 
-상세 URL과 Request·Response Body는 팀 Notion의 백엔드 API 명세에서 관리합니다.
+상세 URL, 필드 설명과 Request·Response Body는 [`document/api-spec.html`](document/api-spec.html) 및 팀 Notion의 백엔드 API 명세에서 관리합니다.
 
 ## 4. 기술 스택
 
@@ -116,6 +135,7 @@ FastAPI-Backend/
 │   │   ├── planning_sessions.py
 │   │   ├── planning_turns.py
 │   │   ├── advertisement_drafts.py
+│   │   ├── draft_downloads.py
 │   │   └── image_generations.py
 │   ├── clients/
 │   │   ├── planning_agent.py
@@ -128,8 +148,10 @@ FastAPI-Backend/
 │   ├── models/
 │   ├── schemas/
 │   └── services/
+├── document/
+│   ├── api-spec.html
+│   └── v2-model-contract-update.txt
 ├── Image/
-├── tests/
 ├── compose.yaml
 ├── Dockerfile
 ├── requirements.txt
@@ -147,6 +169,7 @@ FastAPI-Backend/
 | `app/services/` | 기획 세션, 초안 생성 및 이미지 저장 로직 |
 | `app/grpc_stubs/` | proto와 자동 생성된 gRPC 코드 |
 | `alembic/` | 데이터베이스 구조 변경 이력 |
+| `document/` | 백엔드 API 명세와 모델 서버 연동 계약 문서 |
 | `Image/` | 원본 이미지와 생성 결과 저장 |
 
 ## 7. 이미지 저장 구조
@@ -159,25 +182,40 @@ Image/
     └── {draft_id}/generated.png
 ```
 
+원본 이미지는 JPEG, PNG, WebP 형식을 지원하며 최대 크기는 25MiB입니다.
+
+광고 초안은 `1080 × 1350` 크기의 PNG로 생성하고 검증합니다.
+
 DB에는 이미지 파일 자체가 아닌 이미지 URL과 파일 정보를 저장합니다.
 
-## 8. 현재 테스트 상태
+완성된 광고 초안은 다음 API를 통해 PNG 파일로 다운로드할 수 있습니다.
 
-완료된 항목:
+```text
+GET /api/drafts/{draft_id}/download
+```
+
+## 8. 구현 완료 상태
 
 - 기획 세션 생성·조회 및 최종 저장
 - 이미지 업로드·검증·저장
+- 모델과 대화하며 광고 기획서 작성
 - A·B·C 광고 초안 생성·조회·선택
 - 세션당 성공한 재생성 1회 제한
+- 최초 생성 모델 오류 재시도
+- 시스템 오류와 사용자 재생성 기회 분리
 - 초안 생성 상태 및 오류 관리
 - 기획 대화와 이미지 생성 gRPC 클라이언트 구현
 - 구조화된 gRPC 오류 처리
-- 테스트 PNG를 이용한 결과 저장 흐름 검증
+- 실제 V2 모델 서버와 gRPC 통합
+- React부터 FastAPI와 모델 서버까지 전체 연동
+- 생성 이미지 저장 및 React 화면 출력
+- 광고 이미지 PNG 다운로드
 - PostgreSQL 및 Docker Compose 실행
 
-진행 예정:
+최종 백엔드 기능 구현을 완료했습니다.
 
-- 실제 V2 모델 서버와 gRPC 통합 테스트
-- React부터 모델 서버까지 전체 연동 테스트
-- 광고 이미지 다운로드 기능
-- V2 연동 완료 후 기존 V1 코드 정리
+추후 개선 과제:
+
+- 사용자 인증 및 권한 검사
+- 외부 파일 스토리지 적용
+- 모델 요청 큐와 재시도 정책 고도화

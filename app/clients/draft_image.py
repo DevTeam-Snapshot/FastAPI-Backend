@@ -15,9 +15,10 @@ class AdvertisementBriefData:
     lodging_name: str
     location: str
     selling_points: tuple[str, ...]
-    target_audience: str
+    lodging_service: tuple[str, ...]
     mood: str
     color_preference: str
+    target_audience: str
     ad_copy: str
 
 

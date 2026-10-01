@@ -38,6 +38,8 @@ enum PlanningStep {
   PLANNING_STEP_MOOD = 5;
   PLANNING_STEP_AD_COPY = 6;
   PLANNING_STEP_COMPLETE = 7;
+  PLANNING_STEP_LODGING_SERVICE = 8;
+  PLANNING_STEP_COLOR_PREFERENCE = 9;
 }
 
 enum BriefField {
@@ -53,6 +55,7 @@ enum BriefField {
   BRIEF_FIELD_MOOD = 8;
   BRIEF_FIELD_COLOR_PREFERENCE = 9;
   BRIEF_FIELD_AD_COPY = 10;
+  BRIEF_FIELD_LODGING_SERVICE = 11;
 }
 
 enum TurnEventType {
@@ -104,6 +107,7 @@ message AdvertisementBrief {
   // "auto" = explicitly no preference; absent = not answered.
   optional string color_preference = 8;
   optional string ad_copy = 9;
+  repeated string lodging_service = 10;
 }
 
 message StringChange {
@@ -137,6 +141,7 @@ message BriefPatch {
   StringChange mood = 7;
   StringChange color_preference = 8;
   StringChange ad_copy = 9;
+  StringListReplacement lodging_service = 10;
 }
 
 message ConversationMessage {

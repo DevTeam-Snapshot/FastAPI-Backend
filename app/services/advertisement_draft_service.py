@@ -26,47 +26,88 @@ class DraftRegenerationError(RuntimeError):
     pass
 
 class AdvertisementDraftService:
-    # 3가지 초안 최초 생성
+    # 3가지 초안 최초 생성 또는 실패한 1회차 초안 재시도 준비
     def create_initial_drafts(
             self,
-            db : Session,
+            db: Session,
             planning_session: PlanningSession,
     ) -> list[AdvertisementDraft]:
         try:
-            # 이미 초안이 생성된 세션인지 확인
-            existing_draft = db.scalar(
-                select(AdvertisementDraft)
-                .where(
-                    AdvertisementDraft.session_id
-                    == planning_session.id,
-                    AdvertisementDraft.generation_round == 1
-                )
-                .limit(1)
+            # 기존 1회차 초안 전체 조회
+            drafts = list(
+                db.scalars(
+                    select(AdvertisementDraft).where(
+                        AdvertisementDraft.session_id
+                        == planning_session.id,
+                        AdvertisementDraft.generation_round == 1,
+                    )
+                ).all()
             )
 
-            if existing_draft is not None:
-                raise DraftRoundAlreadyExistsError(
-                    "광고 초안이 이미 생성된 세션입니다."
-                )
+            # 기존 1회차 초안이 없는 경우 새로 생성
+            if not drafts:
+                drafts = [
+                    AdvertisementDraft(
+                        session_id=planning_session.id,
+                        generation_round=1,
+                        direction=direction.value,
+                        status=AdvertisementDraftStatus.PENDING.value,
+                    )
+                    for direction in (
+                        DraftDirection.ROOM,
+                        DraftDirection.EMOTION,
+                        DraftDirection.BENEFIT,
+                    )
+                ]
 
-            # 모델 호출 전, DB에 초안을 생성할 자리 확보
-            drafts = [
-                AdvertisementDraft(
-                    session_id = planning_session.id,
-                    generation_round = 1,
-                    direction = direction.value,
-                    status = AdvertisementDraftStatus.PENDING.value
-                )
-                for direction in (
-                    DraftDirection.ROOM,
-                    DraftDirection.EMOTION,
-                    DraftDirection.BENEFIT
-                )
-            ]
+                db.add_all(drafts)
 
-            db.add_all(drafts)
+            # 기존 1회차 초안이 있는 경우 상태에 따라 처리
+            else:
+                if len(drafts) != 3:
+                    raise DraftRoundAlreadyExistsError(
+                        "1회차 광고 초안 데이터가 올바르지 않습니다."
+                    )
 
-            # <초안 생성 작업 중> 상태로 변경
+                unfinished_statuses = {
+                    AdvertisementDraftStatus.PENDING.value,
+                    AdvertisementDraftStatus.PROCESSING.value,
+                }
+
+                # 이미 모델 호출이 진행 중이면 중복 요청 차단
+                if any(
+                    draft.status in unfinished_statuses
+                    for draft in drafts
+                ):
+                    raise DraftRoundAlreadyExistsError(
+                        "최초 광고 초안 생성이 이미 진행 중입니다."
+                    )
+
+                # 3개가 모두 성공했다면 최초 생성 재호출 차단
+                if all(
+                    draft.status
+                    == AdvertisementDraftStatus.COMPLETED.value
+                    for draft in drafts
+                ):
+                    raise DraftRoundAlreadyExistsError(
+                        "최초 광고 초안 생성이 이미 완료되었습니다."
+                    )
+
+                # 실패한 초안만 같은 draft_id로 다시 시도
+                for draft in drafts:
+                    if (
+                        draft.status
+                        == AdvertisementDraftStatus.FAILED.value
+                    ):
+                        draft.status = (
+                            AdvertisementDraftStatus.PENDING.value
+                        )
+                        draft.image_url = None
+                        draft.file_size = None
+                        draft.error_code = None
+                        draft.error_message = None
+                        draft.completed_at = None
+
             planning_session.status = (
                 PlanningSessionStatus.GENERATING.value
             )
@@ -83,14 +124,14 @@ class AdvertisementDraftService:
             raise DraftRoundAlreadyExistsError(
                 "광고 초안이 이미 생성된 세션입니다."
             ) from error
-        
+
         except SQLAlchemyError as error:
             db.rollback()
 
             raise RuntimeError(
                 "광고 초안을 생성하지 못했습니다."
             ) from error
-        
+
         for draft in drafts:
             db.refresh(draft)
 
@@ -156,6 +197,16 @@ class AdvertisementDraftService:
             ):
                 raise DraftRegenerationError(
                     "최초 광고 초안의 생성 처리가 끝난 후 다시 생성할 수 있습니다."
+                )
+
+            # 1회차 초안이 모두 성공해야 사용자 재생성 가능
+            if not all(
+                draft.status
+                == AdvertisementDraftStatus.COMPLETED.value
+                for draft in initial_drafts
+            ):
+                raise DraftRegenerationError(
+                    "실패한 최초 광고 초안을 먼저 다시 시도해야 합니다."
                 )
 
             # 기존 2회차 초안 조회
@@ -387,6 +438,23 @@ class AdvertisementDraftService:
         except SQLAlchemyError as error:
             raise RuntimeError(
                 "해당 광고 초안을 조회하지 못했습니다."
+            ) from error
+
+    # draft_id로 광고 초안 한 개 조회
+    def get_draft_by_id(
+            self,
+            db: Session,
+            draft_id: UUID,
+    ) -> AdvertisementDraft | None:
+        try:
+            return db.get(
+                AdvertisementDraft,
+                draft_id,
+            )
+
+        except SQLAlchemyError as error:
+            raise RuntimeError(
+                "광고 초안을 조회하지 못했습니다."
             ) from error
 
     # 완성된 광고 초안 한 개를 최종 선택
