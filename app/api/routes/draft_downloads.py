@@ -79,9 +79,9 @@ def download_draft_image(
             detail=str(error),
         ) from error
 
-    # Content-Disposition: attachment 응답
+    # Content-Disposition: attachment 응답 (저장되는 파일 형식, 이름)
     return FileResponse(
         path=file_path,
         media_type="image/png",
-        filename=f"snapshot-ad-{draft.id}.png",
+        filename=f"Snapshot_{draft.direction}.png",
     )
